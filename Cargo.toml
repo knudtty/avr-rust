@@ -21,6 +21,10 @@ git = "https://github.com/rahix/avr-hal"
 rev = "7dfa6d322b9df98b2d98afe0e14a97afe0187ac1"
 features = ["arduino-uno"]
 
+[dependencies.avr-device]
+version = "0.5.2"
+features = ["atmega328p"]
+
 # Configure the build for minimal size - AVRs have very little program memory
 [profile.dev]
 panic = "abort"
