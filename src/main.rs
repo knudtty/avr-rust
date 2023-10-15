@@ -3,7 +3,7 @@
 
 use embedded_hal::digital::v2::{PinState, OutputPin};
 use panic_halt as _;
-use arduino_hal::{port::{mode::Output, Pin}, hal::port::Dynamic};
+use arduino_hal::{port::{mode::{Output, Input, Floating}, Pin}, hal::port::{Dynamic, PD2}};
 
 #[arduino_hal::entry]
 fn main() -> ! {
@@ -21,13 +21,13 @@ fn main() -> ! {
     let mut i = 0;
 
     loop {
-        segment.display(i);
-        i = (i + 1) % 10;
+        segment.display(&mut i);
     }
 }
 
 struct Segments {
     pins: [Pin<Output, Dynamic>; 7],
+    button: Pin<Input<Floating>, PD2>,
 }
 
 impl Segments {
@@ -35,26 +35,31 @@ impl Segments {
         let dp = arduino_hal::Peripherals::take().unwrap();
         let pins = arduino_hal::pins!(dp);
         let pin_arr: [Pin<Output, Dynamic>; 7] = [
-            pins.d4.into_output().downgrade(),// g
-            pins.d5.into_output().downgrade(), // f
+            pins.d4.into_output().downgrade(),  // g
+            pins.d5.into_output().downgrade(),  // f
             pins.d13.into_output().downgrade(), // e
             pins.d12.into_output().downgrade(), // d
             pins.d10.into_output().downgrade(), // c
-            pins.d8.into_output().downgrade(), // b
-            pins.d7.into_output().downgrade(), // a
+            pins.d8.into_output().downgrade(),  // b
+            pins.d7.into_output().downgrade(),  // a
         ];
+        let button = pins.d2.into_floating_input();
 
         Segments {
-            pins: pin_arr
+            pins: pin_arr,
+            button,
         }
     }
 
-    fn display(&mut self, i: u32) {
-        let bits = Segments::map_bits(i);
+    fn display(&mut self, i: &mut u32) {
+        let bits = Segments::map_bits(*i);
         for n in 0..7 {
             let _ = self.pins[n].set_state(PinState::from(bits & 1 << n != 0));
         }
-        arduino_hal::delay_ms(200);
+        *i = (*i + 1) % 10;
+        while self.button.is_high() {}
+        arduino_hal::delay_ms(100);
+        while self.button.is_low() {}
     }
 
     fn map_bits(i: u32) -> u8 {
