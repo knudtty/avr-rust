@@ -2,12 +2,10 @@
 #![no_main]
 
 use panic_halt as _;
-use arduino_hal::{port::{self, mode::Output}, hal::port::PB5};
+use arduino_hal::{port::{mode::Output, Pin}, hal::port::{PB5, PB4, PB2, PB1, PB0, PD4, PD5, PD7}};
 
 #[arduino_hal::entry]
 fn main() -> ! {
-    let dp = arduino_hal::Peripherals::take().unwrap();
-    let pins = arduino_hal::pins!(dp);
 
     /*
      * For examples (and inspiration), head to
@@ -18,251 +16,149 @@ fn main() -> ! {
      * for a different board can be adapted for yours.  The Arduino Uno currently has the most
      * examples available.
      */
+    let mut segment = Segments::new();
+    let mut i = 0;
 
-    let mut morse = Morse::new(pins.d13.into_output());
-
-    let input = "tiffany";
     loop {
-        morse.blink_morse(input);
-        arduino_hal::delay_ms(2000);
+        segment.display(i);
+        i = (i + 1) % 10;
     }
 }
 
-struct Morse {
-    pin: port::Pin<Output, PB5>,
+struct Segments {
+    e: Pin<Output, PB5>,
+    d: Pin<Output, PB4>,
+    c: Pin<Output, PB2>,
+    dp: Pin<Output, PB1>,
+    b: Pin<Output, PB0>,
+    a: Pin<Output, PD7>,
+    f: Pin<Output, PD5>,
+    g: Pin<Output, PD4>,
 }
 
-impl Morse {
-    fn new(pin: port::Pin<Output, PB5>) -> Morse {
-        Morse {
-            pin
+impl Segments {
+    fn new() -> Segments {
+        let dp = arduino_hal::Peripherals::take().unwrap();
+        let pins = arduino_hal::pins!(dp);
+
+        Segments {
+            e: pins.d13.into_output(),
+            d: pins.d12.into_output(),
+            c: pins.d10.into_output(),
+            dp: pins.d9.into_output(),
+            b: pins.d8.into_output(),
+            a: pins.d7.into_output(),
+            f: pins.d5.into_output(),
+            g: pins.d4.into_output(),
         }
     }
 
-    fn blink_morse(&mut self, input: &str) {
-        input.bytes().for_each(|c| {
-            match c {
-                b'a' => {
-                    self.dot();
-                    self.dash();
-                }
-                b'b' => {
-                    self.dash();
-                    self.dot();
-                    self.dot();
-                    self.dot();
-                }
-                b'c' => {
-                    self.dash();
-                    self.dot();
-                    self.dash();
-                    self.dot();
-                }
-                b'd' => {
-                    self.dash();
-                    self.dot();
-                    self.dot();
-                }
-                b'e' => {
-                    self.dot();
-                }
-                b'f' => {
-                    self.dot();
-                    self.dot();
-                    self.dash();
-                    self.dot();
-                }
-                b'g' => {
-                    self.dash();
-                    self.dash();
-                    self.dot();
-                }
-                b'h' => {
-                    self.dot();
-                    self.dot();
-                    self.dot();
-                    self.dot();
-                }
-                b'i' => {
-                    self.dot();
-                    self.dot();
-                }
-                b'j' => {
-                    self.dot();
-                    self.dash();
-                    self.dash();
-                    self.dash();
-                }
-                b'k' => {
-                    self.dash();
-                    self.dot();
-                    self.dash();
-                }
-                b'l' => {
-                    self.dot();
-                    self.dash();
-                    self.dot();
-                    self.dot();
-                }
-                b'm' => {
-                    self.dash();
-                    self.dash();
-                }
-                b'n' => {
-                    self.dash();
-                    self.dot();
-                }
-                b'o' => {
-                    self.dash();
-                    self.dash();
-                    self.dash();
-                }
-                b'p' => {
-                    self.dot();
-                    self.dash();
-                    self.dash();
-                    self.dot();
-                }
-                b'q' => {
-                    self.dash();
-                    self.dash();
-                    self.dot();
-                    self.dash();
-                }
-                b'r' => {
-                    self.dot();
-                    self.dash();
-                    self.dot();
-                }
-                b's' => {
-                    self.dot();
-                    self.dot();
-                    self.dot();
-                }
-                b't' => {
-                    self.dash();
-                }
-                b'u' => {
-                    self.dot();
-                    self.dot();
-                    self.dash();
-                }
-                b'v' => {
-                    self.dot();
-                    self.dot();
-                    self.dot();
-                    self.dash();
-                }
-                b'w' => {
-                    self.dot();
-                    self.dash();
-                    self.dash();
-                }
-                b'x' => {
-                    self.dash();
-                    self.dot();
-                    self.dot();
-                    self.dash();
-                }
-                b'y' => {
-                    self.dash();
-                    self.dot();
-                    self.dash();
-                    self.dash();
-                }
-                b'z' => {
-                    self.dash();
-                    self.dash();
-                    self.dot();
-                    self.dot();
-                }
-                b'1' => {
-                    self.dot();
-                    self.dash();
-                    self.dash();
-                    self.dash();
-                    self.dash();
-                }
-                b'2' => {
-                    self.dot();
-                    self.dot();
-                    self.dash();
-                    self.dash();
-                    self.dash();
-                }
-                b'3' => {
-                    self.dot();
-                    self.dot();
-                    self.dot();
-                    self.dash();
-                    self.dash();
-                }
-                b'4' => {
-                    self.dot();
-                    self.dot();
-                    self.dot();
-                    self.dot();
-                    self.dash();
-                }
-                b'5' => {
-                    self.dot();
-                    self.dot();
-                    self.dot();
-                    self.dot();
-                    self.dot();
-                }
-                b'6' => {
-                    self.dash();
-                    self.dot();
-                    self.dot();
-                    self.dot();
-                    self.dot();
-                }
-                b'7' => {
-                    self.dash();
-                    self.dash();
-                    self.dot();
-                    self.dot();
-                    self.dot();
-                }
-                b'8' => {
-                    self.dash();
-                    self.dash();
-                    self.dash();
-                    self.dot();
-                    self.dot();
-                }
-                b'9' => {
-                    self.dash();
-                    self.dash();
-                    self.dash();
-                    self.dash();
-                    self.dot();
-                }
-                b'0' => {
-                    self.dash();
-                    self.dash();
-                    self.dash();
-                    self.dash();
-                    self.dash();
-                }
-                _ => {}
+    fn display(&mut self, i: u32) {
+        self.clear_display();
+        match i {
+            0 => {
+                self.a.set_high();
+                self.b.set_high();
+                self.c.set_high();
+                self.d.set_high();
+                self.e.set_high();
+                self.f.set_high();
+                //self.g.set_high();
             }
-            arduino_hal::delay_ms(500);
-        });
+            1 => {
+                //self.a.set_high();
+                self.b.set_high();
+                self.c.set_high();
+                //self.d.set_high();
+                //self.e.set_high();
+                //self.f.set_high();
+                //self.g.set_high();
+            }
+            2 => {
+                self.a.set_high();
+                self.b.set_high();
+                //self.c.set_high();
+                self.d.set_high();
+                self.e.set_high();
+                //self.f.set_high();
+                self.g.set_high();
+            }
+            3 => {
+                self.a.set_high();
+                self.b.set_high();
+                self.c.set_high();
+                self.d.set_high();
+                //self.e.set_high();
+                //self.f.set_high();
+                self.g.set_high();
+            }
+            4 => {
+                //self.a.set_high();
+                self.b.set_high();
+                self.c.set_high();
+                //self.d.set_high();
+                //self.e.set_high();
+                self.f.set_high();
+                self.g.set_high();
+            }
+            5 => {
+                self.a.set_high();
+                //self.b.set_high();
+                self.c.set_high();
+                self.d.set_high();
+                //self.e.set_high();
+                self.f.set_high();
+                self.g.set_high();
+            }
+            6 => {
+                self.a.set_high();
+                //self.b.set_high();
+                self.c.set_high();
+                self.d.set_high();
+                self.e.set_high();
+                self.f.set_high();
+                self.g.set_high();
+            }
+            7 => {
+                self.a.set_high();
+                self.b.set_high();
+                self.c.set_high();
+                //self.d.set_high();
+                //self.e.set_high();
+                //self.f.set_high();
+                //self.g.set_high();
+            }
+            8 => {
+                self.a.set_high();
+                self.b.set_high();
+                self.c.set_high();
+                self.d.set_high();
+                self.e.set_high();
+                self.f.set_high();
+                self.g.set_high();
+            }
+            9 => {
+                self.a.set_high();
+                self.b.set_high();
+                self.c.set_high();
+                self.d.set_high();
+                //self.e.set_high();
+                self.f.set_high();
+                self.g.set_high();
+            }
+            _ => {}
+        };
+        arduino_hal::delay_ms(1000);
     }
 
-    fn dot(&mut self) {
-        self.pin.toggle();
-        arduino_hal::delay_ms(200);
-        self.pin.toggle();
-        arduino_hal::delay_ms(200);
-    }
-
-    fn dash(&mut self) {
-        self.pin.toggle();
-        arduino_hal::delay_ms(500);
-        self.pin.toggle();
-        arduino_hal::delay_ms(200);
+    fn clear_display(&mut self) {
+        self.e.set_low();
+        self.d.set_low();
+        self.c.set_low();
+        self.dp.set_low();
+        self.b.set_low();
+        self.a.set_low();
+        self.f.set_low();
+        self.g.set_low();
     }
 }
